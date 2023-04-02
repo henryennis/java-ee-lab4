@@ -12,7 +12,7 @@ import java.util.List;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
+import javax.persistence.TypedQuery;
 
 /**
  *
@@ -42,7 +42,7 @@ public class MyuserFacade implements MyuserFacadeRemote {
 
     private Myuser find(Object id) {
         return em.find(Myuser.class, id);
-    }    
+    }
 
     @Override
     public boolean createRecord(MyuserDTO myuserDTO) {
@@ -73,4 +73,71 @@ public class MyuserFacade implements MyuserFacadeRemote {
         myuser.setSecans(myuserDTO.getSecAns());
         return myuser;
     }
+
+    private MyuserDTO myDAO2DTO(Myuser myuser) {
+        return new MyuserDTO(myuser.getUserid(), myuser.getName(), myuser.getPassword(),
+                myuser.getEmail(), myuser.getPhone(), myuser.getAddress(), myuser.getSecqn(), myuser.getSecans());
+    }
+
+    @Override
+    public MyuserDTO getRecord(String userId) {
+        try {
+            Myuser myuser = find(userId);
+            if (myuser == null) {
+                return null;
+            }
+            return myDAO2DTO(myuser);
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
+    @Override
+    public boolean updateRecord(MyuserDTO myuserDTO) {
+        try {
+            Myuser myuser = find(myuserDTO.getUserid());
+            if (myuser == null) {
+                return false;
+            }
+            edit(myDTO2DAO(myuserDTO));
+            return true;
+        } catch (Exception ex) {
+            return false;
+        }
+    }
+
+    @Override
+    public boolean deleteRecord(String userId) {
+        try {
+            Myuser myuser = find(userId);
+            if (myuser == null) {
+                return false;
+            }
+            remove(myuser);
+            return true;
+        } catch (Exception ex) {
+            return false;
+        }
+    }
+
+    // ...
+    @Override
+    public ArrayList<MyuserDTO> getRecordsByAddress(String address) {
+        try {
+            TypedQuery<Myuser> query = em.createNamedQuery("Myuser.findByAddress", Myuser.class);
+            query.setParameter("address", address);
+            List<Myuser> daoList = query.getResultList();
+            if (daoList.isEmpty()) {
+                return null;
+            }
+            ArrayList<MyuserDTO> dtoList = new ArrayList<>();
+            for (Myuser myuser : daoList) {
+                dtoList.add(myDAO2DTO(myuser));
+            }
+            return dtoList;
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
 }
